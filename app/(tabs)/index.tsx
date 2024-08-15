@@ -1,11 +1,34 @@
-import { Image, StyleSheet, Platform } from 'react-native';
+import {Image, StyleSheet, Platform, TextInput, Button} from 'react-native';
 
 import { HelloWave } from '@/components/HelloWave';
 import ParallaxScrollView from '@/components/ParallaxScrollView';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
+import React from "react";
+import Replicate from "replicate";
 
 export default function HomeScreen() {
+    const [prompt, onChangePrompt] = React.useState('');
+    const [loading, setLoading] = React.useState(false);
+    const [image, setImage] = React.useState<string>("https://replicate.delivery/yhqm/SBdmNAnv2eWgdCnoKp1YqXJufQrkwsL3kBZstQfYs961dkcmA/out-0.webp");
+
+    const replicate = new Replicate({
+        auth: process.env.EXPO_PUBLIC_REPLICATE_API_TOKEN
+    });
+
+    async function createImage() {
+        setLoading(true)
+        const input = {
+            prompt: prompt,
+            output_quality: 90
+        };
+
+        const output = await replicate.run("black-forest-labs/flux-schnell",
+            { input }) as string[];
+        setLoading(false)
+        setImage(output[0])
+    }
+
   return (
     <ParallaxScrollView
       headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
@@ -16,36 +39,28 @@ export default function HomeScreen() {
         />
       }>
       <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
+        <ThemedText type="title">Flux Schnell App</ThemedText>
       </ThemedView>
       <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({ ios: 'cmd + d', android: 'cmd + m' })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
+        <TextInput
+          style={{
+            padding: 8,
+            borderRadius: 8,
+            fontSize: 16,
+          }}
+          multiline
+          onChangeText={onChangePrompt}
+          value={prompt}
+          placeholder="Prompt girin..."/>
+          <Button title="Gönder" disabled={loading} onPress={() => createImage()} />
       </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-        <ThemedText>
-          Tap the Explore tab to learn more about what's included in this starter app.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          When you're ready, run{' '}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
+        <ThemedView style={styles.stepContainer}>
+            <Image
+                source={{uri: image}}
+                style={{height: 300, width: "100%"}}
+                resizeMode={"contain"}
+            />
+        </ThemedView>
     </ParallaxScrollView>
   );
 }
@@ -57,8 +72,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+    gap: 2
   },
   reactLogo: {
     height: 178,
